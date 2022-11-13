@@ -27,4 +27,4 @@ Outdated Value: level * 0.5
 Updated Value: level * 0.35
 ```
 
-Changes take place right away, a server restart is not required.
+Changes take place right away, a server restart is not required. See the [arithmexp wiki](https://github.com/Muqsit/arithmexp/wiki) for a list of [constants](https://github.com/Muqsit/arithmexp/wiki/Constant#list-of-pre-defined-constants), [functions](https://github.com/Muqsit/arithmexp/wiki/Function#list-of-available-functions), and [operators](https://github.com/Muqsit/arithmexp/wiki/Operator) that can be used in expressions.
