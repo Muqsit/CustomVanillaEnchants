@@ -1,4 +1,6 @@
 # CustomVanillaEnchants
+[![](https://poggit.pmmp.io/shield.state/CustomVanillaEnchants)](https://poggit.pmmp.io/p/CustomVanillaEnchants)
+
 CustomVanillaEnchants lets you configure value expressions for registered enchantments.
 
 ## How to Use
