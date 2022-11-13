@@ -1,0 +1,65 @@
+{
+    "base": {
+        "variables": ["level"]
+    },
+    "enchantments": {
+        "blast_protection": {
+            "enchantment_id": "blast_protection",
+            "variables": [],
+            "config": {
+                "factor": "floor((6 + level ** 2) * 1.5 / 3)"
+            }
+        },
+        "feather_falling": {
+            "enchantment_id": "feather_falling",
+            "variables": [],
+            "config": {
+                "factor": "floor((6 + level ** 2) * 2.5 / 3)"
+            }
+        },
+        "fire_aspect": {
+            "enchantment_id": "fire_aspect",
+            "variables": [],
+            "config": {
+                "damage_bonus": "0",
+                "duration": "level * 4"
+            }
+        },
+        "fire_protection": {
+            "enchantment_id": "fire_protection",
+            "variables": [],
+            "config": {
+                "factor": "floor((6 + level ** 2) * 1.25 / 3)"
+            }
+        },
+        "knockback": {
+            "enchantment_id": "knockback",
+            "variables": [],
+            "config": {
+                "damage_bonus": "0",
+                "force": "level * 0.5"
+            }
+        },
+        "projectile_protection": {
+            "enchantment_id": "projectile_protection",
+            "variables": [],
+            "config": {
+                "factor": "floor((6 + level ** 2) * 1.5 / 3)"
+            }
+        },
+        "protection": {
+            "enchantment_id": "protection",
+            "variables": [],
+            "config": {
+                "factor": "floor((6 + level ** 2) * 0.75 / 3)"
+            }
+        },
+        "sharpness": {
+            "enchantment_id": "sharpness",
+            "variables": [],
+            "config": {
+                "damage_bonus": "0.5 * (level + 1)"
+            }
+        }
+    }
+}
