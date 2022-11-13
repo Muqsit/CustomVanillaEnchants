@@ -23,6 +23,7 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use RuntimeException;
 use function array_keys;
+use function array_map;
 use function array_slice;
 use function count;
 use function fclose;
@@ -47,6 +48,21 @@ final class Main extends PluginBase{
 		$this->parser = Parser::createDefault();
 		$this->defaults = $this->loadDefaultConfiguration();
 		$this->overrideDefaultEnchantments();
+		$this->loadOverrides();
+	}
+
+	private function loadOverrides() : void{
+		$overrides = $this->getConfig()->get("overrides", []);
+		is_array($overrides) || throw new RuntimeException("Expeceted overrides to be an array, got " . get_debug_type($overrides));
+		foreach($overrides as $identifier => $config){
+			is_string($identifier) || throw new RuntimeException("Expected \"overrides\" entry identifier to be a string, got " . get_debug_type($identifier));
+			is_array($config) || throw new RuntimeException("Expected \"overrides\" entry value to be an array, got " . get_debug_type($config));
+			foreach($config as $config_identifier => $config_value){
+				is_string($config_identifier) || throw new RuntimeException("Expected \"overrides\" config entry identifier to be a string, got " . get_debug_type($config_identifier));
+				is_string($config_value) || throw new RuntimeException("Expected \"overrides\" config entry identifier to be a string, got " . get_debug_type($config_value));
+				$this->setCustomVanillaEnchantmentConfig($identifier, $config_identifier, $this->parser->parse($config_value), false);
+			}
+		}
 	}
 
 	/**
@@ -95,7 +111,9 @@ final class Main extends PluginBase{
 	}
 
 	private function getCustomVanillaEnchantmentInfo(string $identifier) : CustomEnchantmentInfo{
-		return $this->overrides[$identifier] ?? $this->defaults[$identifier];
+		$info = clone $this->defaults[$identifier];
+		$info->config = array_merge($this->defaults[$identifier]->config, $this->overrides[$identifier]?->config ?? []);
+		return $info;
 	}
 
 	private function getCustomVanillaEnchantmentConfig(string $identifier, string $configuration) : Expression{
@@ -104,13 +122,39 @@ final class Main extends PluginBase{
 			throw new InvalidArgumentException("Configuration entry {$identifier}->{$configuration} does not exist");
 	}
 
-	private function setCustomVanillaEnchantmentConfig(string $identifier, string $configuration, Expression $expression) : void{
+	private function setCustomVanillaEnchantmentConfig(string $identifier, string $configuration, Expression $expression, bool $save = true) : void{
 		if(!isset($this->defaults[$identifier], $this->defaults[$identifier]->config[$configuration])){
 			throw new InvalidArgumentException("Configuration entry {$identifier}->{$configuration} does not exist");
 		}
+
 		$this->defaults[$identifier]->validateExpression($expression);
-		$this->overrides[$identifier] ??= clone $this->defaults[$identifier];
+
+		if(!isset($this->overrides[$identifier])){
+			$this->overrides[$identifier] = clone $this->defaults[$identifier];
+			$this->overrides[$identifier]->config = [];
+		}
+
 		$this->overrides[$identifier]->config[$configuration] = $expression;
+
+		foreach($this->overrides[$identifier]->config as $config_identifier => $config_value){
+			if($this->defaults[$identifier]->config[$config_identifier]->getExpression() === $config_value->getExpression()){
+				unset($this->overrides[$identifier]->config[$config_identifier]);
+			}
+		}
+
+		if(count($this->overrides[$identifier]->config) === 0){
+			unset($this->overrides[$identifier]);
+		}
+
+		if($save){
+			$config = $this->getConfig();
+			$config->set("overrides", array_map(static fn(CustomEnchantmentInfo $info) : array => array_map(
+				static fn(Expression $expression) : string => $expression->getExpression(),
+				$info->config
+			), $this->overrides));
+			$config->save();
+		}
+
 		$this->onUpdateCustomVanillaEnchantmentConfig($identifier);
 	}
 
