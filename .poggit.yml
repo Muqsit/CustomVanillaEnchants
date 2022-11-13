@@ -5,4 +5,7 @@ branches:
 projects:
   CustomVanillaEnchants:
     path: ""
+    libs:
+      - src: muqsit/arithmexp/arithmexp
+        version: ^0.1.28
 ...
