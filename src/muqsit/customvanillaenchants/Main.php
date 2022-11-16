@@ -88,16 +88,16 @@ final class Main extends PluginBase{
 
 		$configurables["base"] ?? throw new InvalidArgumentException("No \"base\" was specified in configuration");
 		$configurables["base"]["variables"] ?? throw new InvalidArgumentException("No \"variables\" was specified in \"base\" configuration");
-		is_array($configurables["base"]["variables"]) ?? throw new InvalidArgumentException("Expected \"base\" \"variables\" to be an array, got " . get_debug_type($configurables["base"]["variables"]));
+		is_array($configurables["base"]["variables"]) || throw new InvalidArgumentException("Expected \"base\" \"variables\" to be an array, got " . get_debug_type($configurables["base"]["variables"]));
 
 		$base_variables = [];
 		foreach($configurables["base"]["variables"] as $variable){
-			is_string($variable) ?? throw new InvalidArgumentException("Expected \"base\" \"variables\" entry to be a string, got " . get_debug_type($variable));
+			is_string($variable) || throw new InvalidArgumentException("Expected \"base\" \"variables\" entry to be a string, got " . get_debug_type($variable));
 			$base_variables[] = $variable;
 		}
 
 		$configurables["enchantments"] ?? throw new InvalidArgumentException("No \"enchantments\" was specified in configuration");
-		is_array($configurables["enchantments"]) ?? throw new InvalidArgumentException("Expected \"enchantments\" to be an array, got " . get_debug_type($configurables["enchantments"]));
+		is_array($configurables["enchantments"]) || throw new InvalidArgumentException("Expected \"enchantments\" to be an array, got " . get_debug_type($configurables["enchantments"]));
 
 		$result = [];
 		foreach($configurables["enchantments"] as $identifier => $data){
