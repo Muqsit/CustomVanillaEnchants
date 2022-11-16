@@ -9,6 +9,9 @@ use JsonException;
 use muqsit\arithmexp\expression\Expression;
 use muqsit\arithmexp\ParseException;
 use muqsit\arithmexp\Parser;
+use muqsit\arithmexp\token\IdentifierToken;
+use muqsit\arithmexp\token\Token;
+use muqsit\arithmexp\Util;
 use muqsit\customvanillaenchants\enchantment\CustomVanillaEnchantment;
 use muqsit\customvanillaenchants\enchantment\FireAspectEnchantment;
 use muqsit\customvanillaenchants\enchantment\KnockbackEnchantment;
@@ -46,6 +49,8 @@ final class Main extends PluginBase{
 
 	protected function onEnable() : void{
 		$this->parser = Parser::createDefault();
+		$this->parser->getMacroRegistry()->registerObject("default", fn(Parser $parser, string $expression, IdentifierToken $token) : array => throw new RuntimeException("\"default\" macro cannot be resolved in this context"));
+
 		$this->defaults = $this->loadDefaultConfiguration();
 		$this->overrideDefaultEnchantments();
 		$this->loadOverrides();
@@ -60,7 +65,7 @@ final class Main extends PluginBase{
 			foreach($config as $config_identifier => $config_value){
 				is_string($config_identifier) || throw new RuntimeException("Expected \"overrides\" config entry identifier to be a string, got " . get_debug_type($config_identifier));
 				is_string($config_value) || throw new RuntimeException("Expected \"overrides\" config entry identifier to be a string, got " . get_debug_type($config_value));
-				$this->setCustomVanillaEnchantmentConfig($identifier, $config_identifier, $this->parser->parse($config_value), false);
+				$this->setCustomVanillaEnchantmentConfig($identifier, $config_identifier, $config_value, false);
 			}
 		}
 	}
@@ -122,9 +127,29 @@ final class Main extends PluginBase{
 			throw new InvalidArgumentException("Configuration entry {$identifier}->{$configuration} does not exist");
 	}
 
-	private function setCustomVanillaEnchantmentConfig(string $identifier, string $configuration, Expression $expression, bool $save = true) : void{
+	private function setCustomVanillaEnchantmentConfig(string $identifier, string $configuration, string $expression_string, bool $save = true) : void{
 		if(!isset($this->defaults[$identifier], $this->defaults[$identifier]->config[$configuration])){
 			throw new InvalidArgumentException("Configuration entry {$identifier}->{$configuration} does not exist");
+		}
+
+		$previous = $this->parser->getConstantRegistry()->get("default")->resolver;
+		$registry = $this->parser->getMacroRegistry();
+		$registry->registerObject("default", function(Parser $parser, string $expression, IdentifierToken $token) use($identifier, $configuration) : array{
+			$default_expression = $this->defaults[$identifier]->config[$configuration]->getExpression();
+
+			$tokens = $parser->getScanner()->scan($default_expression);
+			$parser->processTokens($default_expression, $tokens);
+			$parser->convertTokenTreeToPostfixTokenTree($tokens);
+			Util::flattenArray($tokens);
+			/** @var list<Token> $tokens */
+			return array_map(fn(Token $tok) : Token => $tok->repositioned($token->getPos()), $tokens);
+		});
+		try{
+			$expression = $this->parser->parse($expression_string);
+		}catch(ParseException $e){
+			throw new InvalidArgumentException("Invalid expression: {$expression_string}", 0, $e);
+		}finally{
+			$registry->registerObject("default", $previous);
 		}
 
 		$this->defaults[$identifier]->validateExpression($expression);
@@ -226,14 +251,7 @@ final class Main extends PluginBase{
 
 				$expression_string = implode(" ", array_slice($args, 3));
 				try{
-					$expression = $this->parser->parse($expression_string);
-				}catch(ParseException $e){
-					$sender->sendMessage(TextFormat::RED . $e->getMessage());
-					return true;
-				}
-
-				try{
-					$this->setCustomVanillaEnchantmentConfig($enchantment_identifier, $config, $expression);
+					$this->setCustomVanillaEnchantmentConfig($enchantment_identifier, $config, $expression_string);
 				}catch(InvalidArgumentException $e){
 					$sender->sendMessage(TextFormat::RED . $e->getMessage());
 					return true;
@@ -242,7 +260,7 @@ final class Main extends PluginBase{
 				$sender->sendMessage(
 					TextFormat::GREEN . "Updated configuration for {$enchantment_identifier}->{$config}" . TextFormat::EOL .
 					TextFormat::GREEN . "Outdated Value: " . TextFormat::GRAY . $previous . TextFormat::EOL .
-					TextFormat::GREEN . "Updated Value: " . TextFormat::GRAY . $expression->getExpression()
+					TextFormat::GREEN . "Updated Value: " . TextFormat::GRAY . $expression_string
 				);
 				return true;
 			}
@@ -303,7 +321,7 @@ final class Main extends PluginBase{
 				}
 
 				$previous = $this->getCustomVanillaEnchantmentConfig($enchantment_identifier, $config)->getExpression();
-				$this->setCustomVanillaEnchantmentConfig($enchantment_identifier, $config, $enchantment->config[$config]);
+				$this->setCustomVanillaEnchantmentConfig($enchantment_identifier, $config, $enchantment->config[$config]->getExpression());
 				$updated = $this->getCustomVanillaEnchantmentConfig($enchantment_identifier, $config)->getExpression();
 				$sender->sendMessage(
 					TextFormat::GREEN . "Reset configuration for {$enchantment_identifier}->{$config}" . TextFormat::EOL .
