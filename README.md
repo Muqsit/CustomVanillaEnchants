@@ -27,4 +27,6 @@ Outdated Value: level * 0.5
 Updated Value: level * 0.35
 ```
 
+`default` can be used as a placeholder for the configuration's default value. For example, `/cve set knockback force default * 2` sets knockback's force value to `level * 0.5 * 2` (= `level`). To reset knockback enchantment's `force` to its default value, run `/cve reset knockback force`.
+
 Changes take place right away, a server restart is not required. See the [arithmexp wiki](https://github.com/Muqsit/arithmexp/wiki) for a list of [constants](https://github.com/Muqsit/arithmexp/wiki/Constant#list-of-pre-defined-constants), [functions](https://github.com/Muqsit/arithmexp/wiki/Function#list-of-available-functions), and [operators](https://github.com/Muqsit/arithmexp/wiki/Operator) that can be used in expressions.
