@@ -3,10 +3,10 @@ main: muqsit\customvanillaenchants\Main
 api: 4.10.1
 version: 0.0.2
 permissions:
-  cve.command:
+  customvanillaenchants.command.cve:
     default: op
     description: Grants permission to /cve command
 commands:
   cve:
-    permission: cve.command
+    permission: customvanillaenchants.command.cve
     description: Configure vanilla enchantments
